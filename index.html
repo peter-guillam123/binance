@@ -354,6 +354,38 @@ button.node:hover{border-color:var(--ink-2)}
 .tl li.me::before{border-color:var(--hot);background:var(--hot)}
 .tl b{font-family:var(--f-mono);font-size:.78rem;display:block;color:var(--muted);font-weight:600}
 
+/* view tabs */
+.tabs{display:flex;gap:4px;background:var(--sunk);border:1px solid var(--rule);border-radius:999px;padding:3px;flex:none}
+.tabs a{font:600 .78rem/1 var(--f-mono);letter-spacing:.04em;text-decoration:none;color:var(--ink-2);padding:0 14px;min-height:36px;border-radius:999px;display:inline-flex;align-items:center;gap:6px}
+.tabs a:hover{color:var(--ink)}
+.tabs a[aria-current="page"]{background:var(--ink);color:var(--paper)}
+.tabs .n{font-size:.68rem;opacity:.75}
+@media (max-width:520px){.bar-title{display:none}.toc-btn .t{display:none}.toc-btn{padding:0 12px}.bar-cur{display:none}.bar-in{justify-content:space-between}}
+
+/* videos view */
+.vids{padding-block:clamp(36px,7vw,72px) 40px}
+.vids h1{font-family:var(--f-display);font-stretch:125%;font-weight:850;font-size:clamp(2.4rem,7vw,4.6rem);line-height:.95;letter-spacing:-.022em;margin-top:14px}
+.vids .standfirst{max-width:38em}
+.vgrid{list-style:none;margin:32px 0 0;padding:0;display:grid;grid-template-columns:minmax(0,1fr);gap:34px}
+@media (min-width:600px){.vgrid{grid-template-columns:repeat(2,minmax(0,1fr));gap:34px 24px}}
+@media (min-width:1000px){.vgrid{grid-template-columns:repeat(4,minmax(0,1fr))}}
+.vcard{display:grid;gap:12px;align-content:start;min-width:0}
+.vframe{position:relative;width:100%;max-width:320px;aspect-ratio:9/16;border-radius:18px;overflow:hidden;background:var(--ink);box-shadow:0 18px 40px -22px rgba(10,15,25,.55);justify-self:center}
+@media (min-width:600px){.vframe{max-width:none}}
+.vframe video{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;display:block}
+.vmeta{display:flex;justify-content:space-between;align-items:baseline;gap:10px}
+.vmeta .label{color:var(--hot-ink)}
+.vcard h2{font-size:1.35rem;font-stretch:115%;line-height:1.1}
+.vcard p.d{font-size:1rem;line-height:1.45;color:var(--ink-2)}
+.post{background:var(--raise);border:1px solid var(--rule);border-radius:12px;padding:12px 14px;display:grid;gap:8px}
+.post .label{font-size:.66rem}
+.post p{font-size:.95rem;line-height:1.45;user-select:all}
+.vacts{display:flex;flex-wrap:wrap;gap:6px}
+.vacts .btn{min-height:40px;font-size:.74rem;text-decoration:none}
+.vcard details summary{font-family:var(--f-mono);font-size:.74rem;color:var(--muted);cursor:pointer;min-height:40px;display:flex;align-items:center}
+.vcard details ol{margin:4px 0 0;padding-left:1.2em;display:grid;gap:6px;font-size:.95rem;line-height:1.4}
+.vnote{margin-top:34px;display:grid;gap:10px;max-width:46em;font-size:1rem;color:var(--ink-2)}
+
 /* sources + footer */
 .sources{padding-block:clamp(56px,9vw,96px) 40px}
 .sources ol{margin:14px 0 0;padding-left:1.4em;display:grid;gap:8px;font-size:.95rem;line-height:1.45}
@@ -382,8 +414,9 @@ button.node:hover{border-color:var(--ink-2)}
 <header class="bar" id="bar">
   <div class="bar-in">
     <a class="bar-title" href="#top">The Binance heist<span>.</span></a>
+    <nav class="tabs" aria-label="Views"><a href="#top" id="tab-ex" aria-current="page">Explainer</a><a href="#videos" id="tab-vid">Videos <span class="n">4</span></a></nav>
     <span class="bar-cur" id="cur" aria-hidden="true"></span>
-    <button class="toc-btn" id="toc-btn" aria-expanded="false" aria-controls="toc">Contents <svg viewBox="0 0 16 16" aria-hidden="true"><path d="M3 6l5 5 5-5" fill="none" stroke="currentColor" stroke-width="2"/></svg></button>
+    <button class="toc-btn" id="toc-btn" aria-expanded="false" aria-controls="toc"><span class="t">Contents</span><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M3 6l5 5 5-5" fill="none" stroke="currentColor" stroke-width="2"/></svg></button>
   </div>
   <ol class="toc" id="toc" hidden>
     <li><a href="#short"><span class="label">1 min</span><b>The short version</b></a></li>
@@ -393,6 +426,7 @@ button.node:hover{border-color:var(--ink-2)}
     <li><a href="#suspects"><span class="label">The suspects</span><b>North Korea’s crypto thieves</b></a></li>
     <li><a href="#fallout"><span class="label">The fallout</span><b>What happens now</b></a></li>
     <li><a href="#sources"><span class="label">Sources</span><b>Sources and notes</b></a></li>
+    <li><a href="#videos"><span class="label">Watch</span><b>Four short videos</b></a></li>
   </ol>
   <div class="progress" id="progress" aria-hidden="true"></div>
 </header>
@@ -402,7 +436,7 @@ button.node:hover{border-color:var(--ink-2)}
     <div class="kicker"><span class="pill live">Explainer</span><span class="pill">30 October 2026</span></div>
     <h1>Twenty minutes, <span class="amt nowrap">$6.3bn</span></h1>
     <p class="standfirst">On Thursday evening an attacker emptied wallets at Binance, the world’s biggest crypto exchange. It is the largest theft in crypto’s history, and investigators blame North Korea. Here is what happened, and what it tells us about crypto, in plain English.</p>
-    <p class="meta">Based on Guardian reporting, the crypto-tracing firms TRM Labs and Chainalysis, and statements from Binance. Five minutes to read. Open the extra detail in each section if you want more.</p>
+    <p class="meta">Based on Guardian reporting, the crypto-tracing firms TRM Labs and Chainalysis, and statements from Binance. Five minutes to read. Open the extra detail in each section if you want more. Prefer to watch? <a href="#videos">Four short videos</a>.</p>
 
     <figure class="heist" id="heist" aria-labelledby="heist-title">
       <h2 class="sr" id="heist-title">What was taken, square by square</h2>
@@ -833,6 +867,54 @@ button.node:hover{border-color:var(--ink-2)}
   </section>
 </main>
 
+<section class="wrap-wide vids" id="videos" aria-labelledby="vids-h" hidden>
+  <div class="kicker hero" style="padding:0"><span class="pill live">Videos</span><span class="pill">30 October 2026</span></div>
+  <h1 id="vids-h">The Binance heist in four short videos</h1>
+  <p class="standfirst">Each one stands alone and sends viewers to the full explainer. They are vertical, under a minute, and made for Instagram, TikTok, YouTube Shorts and X.</p>
+  <ul class="vgrid">
+      <li class="vcard">
+        <div class="vframe"><video controls playsinline preload="none" poster="videos/binance-heist-1-twenty-minutes.jpg" aria-label="Video 1: Twenty minutes. No sound; all words are on screen and listed below."><source src="videos/binance-heist-1-twenty-minutes.mp4" type="video/mp4"></video></div>
+        <div class="vmeta"><span class="label">1 of 4</span><span class="label" style="color:var(--muted)">44 seconds · 9:16</span></div>
+        <h2>Twenty minutes</h2>
+        <p class="d">The speed of the theft: $6.36bn leaves Binance square by square, against the clock.</p>
+        <div class="post"><span class="label">Suggested post</span><p id="post-1">Twenty minutes, $6.3bn. That is how fast an attacker emptied wallets at Binance, the world’s biggest crypto exchange, in the largest crypto theft on record. Each square is $10m. The full explainer: peter-guillam123.github.io/binance</p></div>
+        <div class="vacts"><button class="btn copy" data-copy="post-1">Copy post text</button><a class="btn dl" href="videos/binance-heist-1-twenty-minutes.mp4" download hidden>Download MP4</a></div>
+        <details><summary>Words on screen</summary><ol><li>How long does it take to steal $6.3bn?</li><li>Thursday 29 October, 20:05 UTC. A clock runs to 20:25 as squares fill in, each worth $10m, and a counter climbs to $6.36bn taken from Binance.</li><li>Twenty minutes. The biggest crypto theft on record.</li><li>Four times the size of the previous record: Bybit, $1.5bn, in 2025.</li><li>About $3bn has been frozen. The rest is on the move.</li><li>Read the full explainer: peter-guillam123.github.io/binance</li></ol></details>
+      </li>
+      <li class="vcard">
+        <div class="vframe"><video controls playsinline preload="none" poster="videos/binance-heist-2-one-laptop.jpg" aria-label="Video 2: One laptop. No sound; all words are on screen and listed below."><source src="videos/binance-heist-2-one-laptop.mp4" type="video/mp4"></video></div>
+        <div class="vmeta"><span class="label">2 of 4</span><span class="label" style="color:var(--muted)">46 seconds · 9:16</span></div>
+        <h2>One laptop</h2>
+        <p class="d">How the break-in worked, step by step, from one engineer’s laptop to ten blockchains.</p>
+        <div class="post"><span class="label">Suggested post</span><p id="post-2">It started with one hacked laptop. How an attacker turned Binance’s own withdrawal system against it and moved $6.36bn in about 20 minutes. The full explainer: peter-guillam123.github.io/binance</p></div>
+        <div class="vacts"><button class="btn copy" data-copy="post-2">Copy post text</button><a class="btn dl" href="videos/binance-heist-2-one-laptop.mp4" download hidden>Download MP4</a></div>
+        <details><summary>Words on screen</summary><ol><li>It started with one laptop.</li><li>A hacked laptop belonging to a Binance engineer. Binance says this may have been the way in. It has not said how the laptop was hacked.</li><li>From it, the attacker reached the withdrawal system: the software that checks and sends customers’ withdrawals.</li><li>It sent fake orders. The system paid them. Binance says no secret keys leaked. Its own system did the work.</li><li>$6.36bn left on ten blockchains in about 20 minutes, from 8.05pm UK time on Thursday, according to TRM Labs.</li><li>Investigators blame North Korea. Its hackers often get in through staff: fake job offers, booby-trapped coding tests, fake employees.</li><li>Read the full explainer: peter-guillam123.github.io/binance</li></ol></details>
+      </li>
+      <li class="vcard">
+        <div class="vframe"><video controls playsinline preload="none" poster="videos/binance-heist-3-race-to-freeze.jpg" aria-label="Video 3: The race to freeze. No sound; all words are on screen and listed below."><source src="videos/binance-heist-3-race-to-freeze.mp4" type="video/mp4"></video></div>
+        <div class="vmeta"><span class="label">3 of 4</span><span class="label" style="color:var(--muted)">44 seconds · 9:16</span></div>
+        <h2>The race to freeze</h2>
+        <p class="d">Why some stolen crypto can be frozen and the rest can’t, and the thief’s race to swap it.</p>
+        <div class="post"><span class="label">Suggested post</span><p id="post-3">Can you freeze stolen crypto? Some of it. Why Tether and Circle could stop about half of the Binance haul, and why nobody can stop the rest. The full explainer: peter-guillam123.github.io/binance</p></div>
+        <div class="vacts"><button class="btn copy" data-copy="post-3">Copy post text</button><a class="btn dl" href="videos/binance-heist-3-race-to-freeze.mp4" download hidden>Download MP4</a></div>
+        <details><summary>Words on screen</summary><ol><li>Can you freeze stolen crypto?</li><li>Some of it. Stablecoins are digital dollars run by companies. Tether and Circle can block any address. Tokens there stop moving.</li><li>Bitcoin and ether have no company behind them. No one can freeze them.</li><li>Within hours, $2.4bn of stablecoins was frozen. Tether froze $1.57bn of USDT. Circle froze more than $800m of USDC.</li><li>So the thief raced to swap them for ether. Every dollar swapped before a freeze lands is out of reach.</li><li>About $3bn is frozen. The rest is on the move. Getting frozen money back usually takes court orders.</li><li>Read the full explainer: peter-guillam123.github.io/binance</li></ol></details>
+      </li>
+      <li class="vcard">
+        <div class="vframe"><video controls playsinline preload="none" poster="videos/binance-heist-4-suspects.jpg" aria-label="Video 4: The suspects. No sound; all words are on screen and listed below."><source src="videos/binance-heist-4-suspects.mp4" type="video/mp4"></video></div>
+        <div class="vmeta"><span class="label">4 of 4</span><span class="label" style="color:var(--muted)">50 seconds · 9:16</span></div>
+        <h2>The suspects</h2>
+        <p class="d">North Korea’s crypto thieves: their biggest heists to scale, and what the money pays for.</p>
+        <div class="post"><span class="label">Suggested post</span><p id="post-4">Who steals $6bn in 20 minutes? Crypto tracers blame TraderTraitor, an elite North Korean hacking unit. Its biggest heists, to scale, and what the money is thought to pay for. The full explainer: peter-guillam123.github.io/binance</p></div>
+        <div class="vacts"><button class="btn copy" data-copy="post-4">Copy post text</button><a class="btn dl" href="videos/binance-heist-4-suspects.mp4" download hidden>Download MP4</a></div>
+        <details><summary>Words on screen</summary><ol><li>Who steals $6bn in 20 minutes?</li><li>Crypto tracers blame TraderTraitor, an elite North Korean hacking unit. TRM Labs and Chainalysis both name it. No government has confirmed it yet.</li><li>Its biggest heists, to scale, at $10m a square: Bangladesh Bank, 2016, $81m; Ronin Network, 2022, $620m; Bybit, 2025, $1.5bn; Binance, 2026, $6.36bn.</li><li>Binance alone is about as much as North Korea stole in crypto from 2017 to 2025 combined: $6.75bn.</li><li>North Korea’s legal exports last year: $469m. Its biggest export category includes wigs and false eyelashes.</li><li>The money is thought to pay for its weapons. Countries reporting to UN monitors estimate cyber theft pays for about 40% of its weapons programmes.</li><li>Read the full explainer: peter-guillam123.github.io/binance</li></ol></details>
+      </li>
+  </ul>
+  <div class="vnote">
+    <p>The videos have no sound: every word is on screen, and each is listed under its video. They are drawn in the same style and from the same figures as the explainer, and the sources are the same.</p>
+    <p><a href="#top">Back to the explainer</a></p>
+  </div>
+</section>
+
 <footer class="wrap foot">
   <span>An explainer, 30 October 2026. Illustrations and charts drawn for this page.</span>
   <a href="about.html">About this explainer</a>
@@ -880,11 +962,37 @@ function onScroll() {
   const max = document.documentElement.scrollHeight - innerHeight;
   prog.style.transform = `scaleX(${max > 0 ? Math.min(1, scrollY / max) : 0})`;
   let label = "";
-  for (const s of secs) if (s.getBoundingClientRect().top < innerHeight * 0.3) label = s.dataset.label;
+  if (!document.getElementById("top").hidden) for (const s of secs) if (s.getBoundingClientRect().top < innerHeight * 0.3) label = s.dataset.label;
   if (cur.textContent !== label) cur.textContent = label;
 }
 addEventListener("scroll", () => { if (!ticking) { ticking = true; requestAnimationFrame(onScroll); } }, { passive: true });
 onScroll();
+
+/* ---------- two views: explainer and videos ---------- */
+const vView = $("#videos"), mainEl = $("#top"), tabEx = $("#tab-ex"), tabVid = $("#tab-vid");
+function route() {
+  const h = location.hash.slice(1);
+  const vids = h === "videos";
+  vView.hidden = !vids; mainEl.hidden = vids;
+  if (vids) { tabEx.removeAttribute("aria-current"); tabVid.setAttribute("aria-current", "page"); scrollTo(0, 0); $$("#videos video").forEach(v => { v.preload = "metadata"; }); }
+  else {
+    tabVid.removeAttribute("aria-current"); tabEx.setAttribute("aria-current", "page");
+    $$("#videos video").forEach(v => v.pause());
+    const target = h && document.getElementById(h);
+    if (target && target !== mainEl) requestAnimationFrame(() => target.scrollIntoView({ behavior: "instant" }));
+  }
+  onScroll();
+}
+addEventListener("hashchange", route);
+route();
+$$(".copy").forEach(b => b.addEventListener("click", () => {
+  const p = document.getElementById(b.dataset.copy);
+  const done = () => { b.textContent = "Copied"; setTimeout(() => { b.textContent = "Copy post text"; }, 1800); };
+  const pick = () => { const r = document.createRange(); r.selectNodeContents(p); const sel = getSelection(); sel.removeAllRanges(); sel.addRange(r); b.textContent = "Selected: copy it"; };
+  try { navigator.clipboard.writeText(p.textContent).then(done, pick); } catch (e) { pick(); }
+}));
+// downloads work on the public site, not inside a sandboxed preview
+if (/github\.io$/.test(location.hostname) || location.protocol === "file:") $$(".dl").forEach(a => a.hidden = false);
 
 const tocBtn = $("#toc-btn"), toc = $("#toc");
 function setToc(open) { toc.hidden = !open; tocBtn.setAttribute("aria-expanded", String(open)); }
