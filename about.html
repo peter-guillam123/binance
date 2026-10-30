@@ -1,0 +1,70 @@
+<!doctype html>
+<html lang="en-GB">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>About the Binance heist explainer</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,400..900&family=JetBrains+Mono:wght@400;500;600&family=Newsreader:ital,opsz,wght@0,6..72,400..700;1,6..72,400..600&display=swap">
+<style>
+/* Layout: a single reading column, same palette and type as the explainer. */
+:root{
+  --paper:#ECEFF3; --raise:#F7F8FA; --ink:#0F141C; --ink-2:#3A4454; --muted:#5B6576; --rule:#C7CED8; --hot:#DD4519; --hot-ink:#B23812; --cold:#1C6FC0;
+  --f-display:"Archivo","Helvetica Neue",Arial,sans-serif;
+  --f-body:"Newsreader",Georgia,"Times New Roman",serif;
+  --f-mono:"JetBrains Mono",ui-monospace,"SFMono-Regular",Menlo,Consolas,monospace;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){--paper:#0C1017;--raise:#141A24;--ink:#E8ECF2;--ink-2:#B8C1CE;--muted:#8792A4;--rule:#273142;--hot:#FF6A3D;--hot-ink:#FF8A62;--cold:#55AEF7;color-scheme:dark}}
+:root[data-theme="dark"]{--paper:#0C1017;--raise:#141A24;--ink:#E8ECF2;--ink-2:#B8C1CE;--muted:#8792A4;--rule:#273142;--hot:#FF6A3D;--hot-ink:#FF8A62;--cold:#55AEF7;color-scheme:dark}
+*,*::before,*::after{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{margin:0;background:var(--paper);color:var(--ink);font-family:var(--f-body);font-size:1.125rem;line-height:1.6}
+:focus-visible{outline:3px solid var(--cold);outline-offset:3px;border-radius:3px}
+a{color:inherit;text-underline-offset:.18em}
+.wrap{max-width:calc(40rem + 32px);margin-inline:auto;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:40px 64px}
+.back{font-family:var(--f-mono);font-size:.8rem;display:inline-flex;align-items:center;min-height:40px}
+h1,h2{font-family:var(--f-display);font-stretch:125%;font-weight:800;line-height:1.02;letter-spacing:-.015em;text-wrap:balance;margin:0}
+h1{font-size:clamp(2.2rem,7vw,3.6rem);margin-top:20px}
+h2{font-size:1.5rem;margin-top:44px}
+p{margin:0}
+.prose{display:grid;gap:1em;margin-top:18px}
+.label{font-family:var(--f-mono);font-size:.74rem;letter-spacing:.09em;text-transform:uppercase;color:var(--hot-ink);font-weight:600}
+.diary{list-style:none;margin:20px 0 0;padding:0;border-left:2px solid var(--rule);margin-left:6px}
+.diary li{position:relative;padding:0 0 26px 22px;display:grid;gap:6px}
+.diary li::before{content:"";position:absolute;left:-8px;top:.4em;width:14px;height:14px;border-radius:50%;background:var(--paper);border:2px solid var(--muted)}
+.diary li.milestone::before{background:var(--hot);border-color:var(--hot)}
+.diary time{font-family:var(--f-mono);font-size:.78rem;color:var(--muted)}
+.diary .ms{font-family:var(--f-mono);font-size:.7rem;letter-spacing:.08em;text-transform:uppercase;color:var(--hot-ink);font-weight:600;margin-left:8px}
+.diary h3{margin:0;font-family:var(--f-display);font-stretch:112%;font-weight:700;font-size:1.1rem;line-height:1.25}
+</style>
+</head>
+<body>
+<main class="wrap">
+  <a class="back" href="index.html">← Back to the explainer</a>
+  <h1>About this explainer</h1>
+  <div class="prose">
+    <p>This page explains the theft of about $6.3bn from Binance on 29 October 2026 for readers who know little or nothing about crypto. It gives the whole story in a minute, then lets you go deeper into the parts you care about: how crypto works, how the attacker got in, the race to freeze the money, the North Korean unit blamed for it, and what happens next.</p>
+    <p>It is a prototype of a reader-facing explainer, not a published Guardian article.</p>
+  </div>
+
+  <h2>How it is made</h2>
+  <div class="prose">
+    <p>The starting point is the Guardian’s report by Dan Milmo and the paper’s business live blog, read through the Guardian’s Content API. The rest of the reporting comes from the tracing firms TRM Labs, Chainalysis and Elliptic, statements from Binance, and coverage by Reuters, CNBC, CNN, CoinDesk, The Block and others. Every figure is listed with its source at the foot of the page. Where sources disagree, the page says so.</p>
+    <p>It was built with Claude, Anthropic’s AI model, which did the research and wrote the code from a brief. A person chose what to include and checked the result.</p>
+    <p>The page is a single HTML file with no frameworks. The charts and the Pyongyang skyline are drawn in code for this page, so there are no agency photos to license. Everything works by keyboard and screen reader, follows your phone’s light or dark setting, and stops moving if you have asked your device to reduce motion.</p>
+  </div>
+
+  <h2>Diary</h2>
+  <ol class="diary">
+    <li class="milestone">
+      <time datetime="2026-10-30">30 October 2026</time>
+      <h3>First version <span class="ms">Milestone</span></h3>
+      <p>Built the day after the theft. The page opens on the stolen money drawn as 637 squares, each worth $10m, which replay the 20 minutes and regroup to show which blockchains were hit, how much could be frozen and how much has been. One drawing of an exchange’s insides does two jobs: it explains the parts in the basics section, then shows the route of the attack step by step.</p>
+      <p>The colours borrow crypto’s own terms. Orange means hot: online, exposed or still loose. Blue means cold: offline or frozen. The North Korea section sits on a night-time band because the theft began just after 5am in Pyongyang.</p>
+    </li>
+  </ol>
+</main>
+</body>
+</html>
