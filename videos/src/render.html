@@ -1,0 +1,472 @@
+<!doctype html>
+<html lang="en-GB">
+<head>
+<meta charset="utf-8">
+<title>Binance heist video renderer</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,400..900&family=JetBrains+Mono:wght@400;500;600;700&family=Newsreader:ital,opsz,wght@0,6..72,400..700;1,6..72,400..600&display=swap">
+<style>
+/* 1080x1920 frame. Safe area for text: x 90-930 (right rail left clear), y 140-1500. */
+:root{
+  --bg:#ECEFF3; --fg:#0F141C; --fg-2:#3A4454; --muted:#5B6576; --rule:#C7CED8; --raise:#F7F8FA; --held:#CDD3DC;
+  --hot:#DD4519; --hot-ink:#B23812; --hot-wash:#F9DDD3; --cold:#1C6FC0; --cold-wash:#D5E7F8; --dollar:#13966A; --mark:#98A1AF;
+  --f-display:"Archivo",Arial,sans-serif; --f-body:"Newsreader",Georgia,serif; --f-mono:"JetBrains Mono",Menlo,monospace;
+}
+.night{--bg:#0B1120; --fg:#E8ECF4; --fg-2:#C5CDDB; --muted:#9AA6BB; --rule:#29334B; --raise:#151D31; --held:#2A3450; --hot:#FF6A3D; --hot-ink:#FF8A62; --mark:#56627B}
+html,body{margin:0;background:#000}
+#stage{position:relative;width:1080px;height:1920px;overflow:hidden;background:var(--bg);color:var(--fg);font-family:var(--f-body)}
+#stage *{box-sizing:border-box}
+.prog{position:absolute;left:0;top:0;height:10px;width:1080px;background:var(--hot);transform-origin:0 50%}
+.series{position:absolute;left:90px;top:140px;display:flex;gap:20px;align-items:baseline;white-space:nowrap}
+.series b{font-family:var(--f-display);font-stretch:125%;font-weight:800;font-size:34px;letter-spacing:-.01em}
+.series b i{color:var(--hot);font-style:normal}
+.series span{font-family:var(--f-mono);font-size:25px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+.blk{position:absolute;left:90px;width:840px}
+.h{font-family:var(--f-display);font-stretch:125%;font-weight:850;line-height:.98;letter-spacing:-.022em;margin:0}
+.w{display:inline-block}
+.hot{color:var(--hot)} .cold{color:var(--cold)}
+.sup{font-family:var(--f-body);font-size:48px;line-height:1.25;font-weight:500;color:var(--fg-2);margin:0}
+.lab{font-family:var(--f-mono);font-size:28px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);font-weight:500}
+.src{position:absolute;left:90px;top:1520px;width:840px;font-family:var(--f-mono);font-size:25px;color:var(--muted);line-height:1.4}
+.fade{opacity:0}
+/* end card */
+.end{position:absolute;inset:0;background:var(--bg);opacity:0}
+.end-in{position:absolute;left:90px;top:470px;width:840px;display:flex;flex-direction:column;align-items:flex-start;gap:34px}
+.end .k{font-family:var(--f-mono);font-size:30px;letter-spacing:.1em;color:var(--hot-ink);font-weight:600}
+.end .t{font-size:118px;margin-top:-14px}
+.end .d{width:800px}
+.end .url{font-family:var(--f-mono);font-size:38px;font-weight:600;padding:22px 30px;border:3px solid var(--fg);border-radius:999px;white-space:nowrap;margin-top:10px}
+.end .f{width:800px;font-family:var(--f-mono);font-size:25px;line-height:1.5;color:var(--muted)}
+/* v1 */
+.clock{font-family:var(--f-mono);font-weight:600;font-size:110px;letter-spacing:-.03em;line-height:1}
+.clock small{font-size:40px;color:var(--muted);font-weight:500;margin-left:14px;letter-spacing:.04em}
+.zones{font-family:var(--f-mono);font-size:28px;color:var(--muted)}
+.counter{font-family:var(--f-display);font-stretch:125%;font-weight:850;font-size:150px;line-height:.95;letter-spacing:-.02em;color:var(--hot)}
+canvas{position:absolute;left:0;top:0}
+.legend{display:flex;flex-wrap:wrap;gap:10px 28px;font-family:var(--f-mono);font-size:26px;color:var(--fg-2)}
+.legend span{display:inline-flex;align-items:center;gap:10px}
+.legend i{width:22px;height:22px;border-radius:5px;display:inline-block}
+.legend b{color:var(--fg);font-weight:600}
+.tag{position:absolute;font-family:var(--f-mono);font-size:30px;font-weight:600;color:#fff;background:#0F141C;padding:10px 16px;border-radius:10px;white-space:nowrap;box-shadow:0 0 0 4px #ECEFF3}
+/* v2 nodes */
+.node{position:absolute;left:90px;width:780px;height:124px;border:3px solid var(--rule);border-radius:24px;background:var(--raise);display:flex;align-items:center;gap:26px;padding:0 30px}
+.node svg{width:64px;height:64px;flex:none;stroke:var(--fg-2);fill:none;stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round}
+.node b{display:block;font-family:var(--f-display);font-stretch:112%;font-weight:750;font-size:44px;line-height:1.05}
+.node small{display:block;font-family:var(--f-mono);font-size:26px;color:var(--muted);margin-top:6px}
+.node .glow{position:absolute;inset:-12px;border-radius:32px;border:8px solid var(--hot);opacity:0}
+.node.tall{height:196px;flex-direction:column;align-items:flex-start;justify-content:center;gap:16px}
+.node.tall .row{display:flex;align-items:center;gap:26px}
+.tiles{display:flex;gap:8px}
+.tiles span{width:64px;height:48px;border-radius:8px;border:2px solid var(--rule);display:grid;place-items:center;font-family:var(--f-mono);font-size:16px;font-weight:700;color:var(--muted);background:var(--bg)}
+.wire{position:absolute;width:8px;margin-left:-4px;background:var(--hot);transform-origin:50% 0;border-radius:4px}
+.dot{position:absolute;width:22px;height:22px;margin:-11px 0 0 -11px;border-radius:50%;background:var(--hot);box-shadow:0 0 0 5px var(--bg)}
+/* v3 */
+.lane-lab{position:absolute;left:90px;font-family:var(--f-mono);font-size:30px;letter-spacing:.06em;text-transform:uppercase;color:var(--fg-2);font-weight:500}
+.road{position:absolute;left:90px;width:840px;height:6px;background:var(--rule);border-radius:3px}
+.gate{position:absolute;width:20px;height:170px;margin-left:-10px;border-radius:8px;background:var(--cold);box-shadow:0 0 0 18px rgba(28,111,192,.16)}
+.gate-lab{position:absolute;font-family:var(--f-mono);font-size:26px;color:var(--muted);white-space:nowrap;transform:translateX(-50%)}
+.coin{position:absolute;width:100px;height:100px;margin:-50px 0 0 -50px;border-radius:50%;display:grid;place-items:center;color:#fff;font-family:var(--f-mono);font-weight:700;font-size:50px;box-shadow:0 0 0 7px var(--bg)}
+.coin>*{grid-area:1/1}
+.coin svg{width:56px;height:56px;stroke:#fff;fill:none;stroke-width:1.9;stroke-linecap:round}
+.bar-row{position:absolute;left:90px;width:840px}
+.bar-row .n{font-family:var(--f-mono);font-size:30px;color:var(--fg-2);margin-bottom:12px}
+.bar-row .n b{color:var(--fg);font-weight:700}
+.bar{height:72px;border-radius:0 10px 10px 0;transform-origin:0 50%}
+.stackbar{position:absolute;left:90px;width:840px;height:110px;display:flex;gap:6px}
+.stackbar div{height:100%;transform-origin:0 50%}
+/* v4 */
+.sq-row{position:absolute;left:90px;width:840px}
+.sq-row .n{display:flex;justify-content:space-between;align-items:baseline;gap:20px;margin-bottom:12px}
+.sq-row .n b{font-family:var(--f-display);font-stretch:112%;font-weight:750;font-size:40px}
+.sq-row .n span{font-family:var(--f-mono);font-size:28px;color:var(--muted);white-space:nowrap}
+.sq-row .n em{font-style:normal;font-family:var(--f-mono);font-weight:700;font-size:32px;color:var(--fg)}
+.big{font-family:var(--f-display);font-stretch:125%;font-weight:900;font-size:340px;line-height:.85;letter-spacing:-.04em;color:var(--hot)}
+</style>
+</head>
+<body>
+<div id="stage"></div>
+<script>
+"use strict";
+const stage = document.getElementById("stage");
+const clamp = (x, a = 0, b = 1) => Math.min(b, Math.max(a, x));
+const seg = (t, a, b) => clamp((t - a) / (b - a));
+const ease = (x) => 1 - Math.pow(1 - x, 3);
+const easeIO = (x) => x < .5 ? 4 * x * x * x : 1 - Math.pow(-2 * x + 2, 3) / 2;
+const lerp = (a, b, p) => a + (b - a) * p;
+function rng(seed) { return () => (seed = (seed * 16807) % 2147483647) / 2147483647; }
+function el(tag, cls, html, parent = stage, style) {
+  const e = document.createElement(tag); if (cls) e.className = cls; if (html != null) e.innerHTML = html;
+  if (style) Object.assign(e.style, style); parent.appendChild(e); return e;
+}
+const esc = (s) => s.replace(/&/g, "&amp;").replace(/</g, "&lt;");
+/* kinetic text: *hot* and ~cold~ markers */
+function kin(e, text) {
+  e.innerHTML = ""; const ws = []; let mode = null;
+  text.split(/\s+/).forEach((tok) => {
+    let html = "", buf = "";
+    const flush = () => { if (buf) { html += mode ? `<span class="${mode}">${esc(buf)}</span>` : esc(buf); buf = ""; } };
+    for (const ch of tok) {
+      if (ch === "*" || ch === "~") { flush(); const m = ch === "*" ? "hot" : "cold"; mode = mode === m ? null : m; }
+      else buf += ch;
+    }
+    flush();
+    const w = document.createElement("span"); w.className = "w"; w.innerHTML = html;
+    e.appendChild(w); e.appendChild(document.createTextNode(" ")); ws.push(w);
+  });
+  e._w = ws; return e;
+}
+function showKin(e, t, tin, tout, o = {}) {
+  const st = o.stagger ?? .065, du = o.dur ?? .55, dy = o.dy ?? 50;
+  const vis = t >= tin && (tout == null || t < tout);
+  e.style.visibility = vis ? "visible" : "hidden";
+  if (!vis) return;
+  const out = tout == null ? 0 : ease(seg(t, tout - .4, tout));
+  e._w.forEach((w, i) => {
+    const p = ease(seg(t, tin + i * st, tin + i * st + du));
+    w.style.opacity = p * (1 - out);
+    w.style.transform = `translateY(${(1 - p) * dy - out * 26}px)`;
+  });
+}
+function fade(e, t, tin, tout, o = {}) {
+  const du = o.dur ?? .5, dy = o.dy ?? 36;
+  const pin = ease(seg(t, tin, tin + du)), pout = tout == null ? 0 : ease(seg(t, tout - .4, tout));
+  const op = Math.min(pin, 1 - pout);
+  e.style.opacity = op; e.style.visibility = op > .001 ? "visible" : "hidden";
+  e.style.transform = `translateY(${(1 - pin) * dy - pout * 20}px)` + (o.extra || "");
+  return op;
+}
+function hex(c) { const n = parseInt(c.slice(1), 16); return [n >> 16, (n >> 8) & 255, n & 255]; }
+function mix(a, b, p) { return [0, 1, 2].map(i => Math.round(lerp(a[i], b[i], p))); }
+const css = (a) => `rgb(${a[0]},${a[1]},${a[2]})`;
+
+/* shared furniture: progress line, series label, source line, end card */
+function frame(o) {
+  if (o.night) stage.classList.add("night");
+  const f = {};
+  f.prog = el("div", "prog");
+  f.series = el("div", "series", `<b>The Binance heist<i>.</i></b><span>${o.part} of 4 · ${o.name}</span>`);
+  f.src = el("div", "src fade", o.src);
+  f.end = el("div", "end");
+  const ei = el("div", "end-in", null, f.end);
+  el("div", "k", "READ THE FULL EXPLAINER", ei);
+  el("h2", "h t", "The Binance heist", ei);
+  el("p", "sup d", "What happened, who is blamed and what it means for crypto, in plain English.", ei);
+  el("div", "url", "peter-guillam123.github.io/binance", ei);
+  el("p", "f", `Part ${o.part} of 4 · Based on Guardian reporting and data from TRM Labs and Chainalysis`, ei);
+  f.endKids = [...ei.children];
+  f.endIn = o.endIn; f.dur = o.dur; f.srcIn = o.srcIn ?? 3.6;
+  f.seek = (t) => {
+    f.prog.style.transform = `scaleX(${clamp(t / o.dur)})`;
+    fade(f.src, t, f.srcIn, f.endIn, { dy: 0 });
+    const pe = ease(seg(t, o.endIn, o.endIn + .6));
+    f.end.style.opacity = pe;
+    f.endKids.forEach((c, i) => { const p = ease(seg(t, o.endIn + .25 + i * .12, o.endIn + .85 + i * .12)); c.style.opacity = p; c.style.transform = `translateY(${(1 - p) * 40}px)`; });
+  };
+  return f;
+}
+
+function beat(text, sup, a, b, size = 72) {
+  const w = el("div", "blk", null, stage, { top: "270px" });
+  const h = kin(el("h2", "h", null, w, { fontSize: size + "px" }), text);
+  let sp = null;
+  if (sup) sp = sup.startsWith("LAB:") ? el("p", "lab fade", sup.slice(4), w, { marginTop: "26px" }) : el("p", "sup fade", sup, w, { marginTop: "26px", fontSize: "44px" });
+  return [h, sp, a, b];
+}
+const VIDEOS = {};
+
+/* ===================== 1. Twenty minutes ===================== */
+VIDEOS[1] = { dur: 44, build() {
+  const F = frame({ part: 1, name: "Twenty minutes", dur: 44, endIn: 38.2, src: "Data: TRM Labs, 30 October 2026. Frozen total: Binance." });
+  const hook = kin(el("h1", "h blk", null, stage, { top: "520px", fontSize: "124px" }), "How long does it take to steal *$6.3bn?*");
+  const clockG = el("div", "blk", `<div class="lab">Thursday 29 October</div><div class="clock" id="clk">20:05:00<small>UTC</small></div><div class="zones" id="zn">London 20:05 · Pyongyang 05:05 Friday</div>`, stage, { top: "268px" });
+  const cntG = el("div", "blk", `<div class="lab">Taken from Binance</div><div class="counter" id="cnt">$0.00bn</div>`, stage, { top: "520px" });
+  const h2 = kin(el("h2", "h blk", null, stage, { top: "290px", fontSize: "88px" }), "*Twenty minutes.* The biggest crypto theft on record.");
+  const h3 = kin(el("h2", "h blk", null, stage, { top: "290px", fontSize: "88px" }), "*Four times* the size of the previous record.");
+  const h4 = kin(el("h2", "h blk", null, stage, { top: "290px", fontSize: "88px" }), "About ~$3bn~ has been frozen. The rest is on the move.");
+  const clk = clockG.querySelector("#clk"), zn = clockG.querySelector("#zn"), cnt = cntG.querySelector("#cnt");
+  // waffle
+  const COLS = 28, CELL = 30, GAP = 3, X0 = 90, Y0 = 730;
+  const cv = el("canvas", null, null, stage); cv.width = 1080; cv.height = 1920; const g = cv.getContext("2d");
+  const CH = [["eth", 379, 279, "#2a78d6"], ["btc", 147, 0, "#eda100"], ["trx", 63, 61, "#e87ba4"], ["xrp", 30, 0, "#6250d6"], ["sol", 10, 0, "#1baf7a"], ["oth", 8, 0, "#8a93a3"]];
+  const SQ = []; CH.forEach(([k, n, st, c]) => { for (let j = 0; j < n; j++) SQ.push({ k, st: j < st, c: hex(c) }); });
+  let fz = 0; SQ.forEach(s => { s.fz = s.st && fz < 300 && ++fz > 0; });
+  const N = SQ.length;
+  const frozenOrder = [...SQ.keys()].sort((a, b) => (SQ[b].fz - SQ[a].fz) || (a - b));
+  frozenOrder.forEach((i, k) => SQ[i].posC = k);
+  const r = rng(29); const xrp = [], rest = [];
+  SQ.forEach((s, i) => (s.k === "xrp" ? xrp : rest).push(i));
+  for (let i = rest.length - 1; i > 0; i--) { const j = Math.floor(r() * (i + 1)); [rest[i], rest[j]] = [rest[j], rest[i]]; }
+  const seq = xrp.concat(rest); seq.forEach((i, k) => SQ[i].rank = k);
+  const HELD = hex("#CDD3DC"), HOT = hex("#DD4519"), INK = hex("#0F141C"), COLD = hex("#1C6FC0");
+  const FILL0 = 5.0, FILL1 = 19.0;
+  const fillE = (t) => { const p = seg(t, FILL0, FILL1); return 1 - Math.pow(1 - p, 1.7); };
+  const xy = (k) => [X0 + (k % COLS) * CELL, Y0 + Math.floor(k / COLS) * CELL];
+  // legends and tags
+  const leg0 = el("div", "blk legend", `<span>Each square is $10m</span>`, stage, { top: "1440px" });
+  const leg1 = el("div", "blk legend", CH.map(([k, n, s, c], i) => `<span><i style="background:${c}"></i>${["Ethereum", "Bitcoin", "Tron", "XRP", "Solana", "Others"][i]} <b>${["$3.79bn", "$1.47bn", "$628m", "$296m", "$96m", "$77m"][i]}</b></span>`).join(""), stage, { top: "1418px", fontSize: "24px", gap: "8px 22px" });
+  const leg2 = el("div", "blk legend", `<span><i style="background:#0F141C"></i>Bybit, 2025 <b>$1.5bn</b></span><span><i style="background:#DD4519"></i>Binance, 2026 <b>$6.36bn</b></span>`, stage, { top: "1440px" });
+  const leg3 = el("div", "blk legend", `<span><i style="background:#1C6FC0"></i>Frozen <b>about $3bn</b></span><span><i style="background:#DD4519"></i>Not frozen <b>about $3.4bn</b></span>`, stage, { top: "1440px" });
+  const tagB = el("div", "tag", "Previous record: Bybit, $1.5bn", stage, { left: "120px", top: (Y0 + 50) + "px" });
+  const pad = (n) => String(n).padStart(2, "0");
+  return (t) => {
+    F.seek(t);
+    showKin(hook, t, .15, 3.5);
+    fade(clockG, t, 3.6, 19.6); fade(cntG, t, 3.9, 19.6);
+    const e = fillE(t), shown = Math.round(e * N);
+    const secs = Math.round(e * 1200), m = 5 + Math.floor(secs / 60), s = secs % 60;
+    clk.innerHTML = `20:${pad(m)}:${pad(s)}<small>UTC</small>`;
+    zn.textContent = `London 20:${pad(m)} · Pyongyang 05:${pad(m)} Friday`;
+    cnt.textContent = "$" + (shown >= N ? 6.36 : shown * .01).toFixed(2) + "bn";
+    showKin(h2, t, 19.8, 25.2); showKin(h3, t, 25.4, 31.2); showKin(h4, t, 31.4, 38.2);
+    fade(leg0, t, 4.4, 19.4, { dy: 0 }); fade(leg1, t, 19.6, 25.2, { dy: 0 }); fade(leg2, t, 25.6, 31.2, { dy: 0 }); fade(leg3, t, 32.4, 38.2, { dy: 0 });
+    fade(tagB, t, 26.4, 31.0, { dy: 0 });
+    // squares
+    g.clearRect(0, 0, 1080, 1920);
+    const appear = ease(seg(t, 3.9, 4.7)), gone = ease(seg(t, 37.7, 38.3));
+    if (appear <= 0 || gone >= 1) return;
+    const sz = CELL - GAP;
+    for (let i = 0; i < N; i++) {
+      const q = SQ[i];
+      // colour by phase
+      const revealAt = FILL0 + (FILL1 - FILL0) * (1 - Math.pow(1 - (q.rank + 1) / N, 1 / 1.7));
+      const pf = seg(t, revealAt, revealAt + .3);
+      let col = mix(HELD, q.c, pf);
+      const row = Math.floor(i / COLS);
+      const pb = ease(seg(t, 25.4 + row * .025, 25.9 + row * .025));
+      if (pb > 0) col = mix(col, i < 146 ? INK : HOT, pb);
+      const posK = (() => { const pm = easeIO(seg(t, 31.6 + (q.posC % COLS) * .012 + Math.floor(q.posC / COLS) * .01, 32.8 + (q.posC % COLS) * .012 + Math.floor(q.posC / COLS) * .01)); return pm; })();
+      if (posK > 0) col = mix(col, q.fz ? COLD : HOT, ease(seg(t, 32.4 + (q.posC / N) * .9, 33.0 + (q.posC / N) * .9)));
+      const [ax, ay] = xy(i), [cx, cy] = xy(q.posC);
+      const x = lerp(ax, cx, posK), y = lerp(ay, cy, posK);
+      const pop = pf > 0 && pf < 1 ? Math.sin(pf * Math.PI) * 5 : 0;
+      g.globalAlpha = appear * (1 - gone);
+      g.fillStyle = css(col);
+      g.beginPath(); g.roundRect(x - pop / 2, y - pop / 2, sz + pop, sz + pop, 4); g.fill();
+    }
+    g.globalAlpha = 1;
+  };
+} };
+
+/* ===================== 2. One laptop ===================== */
+const ICON = {
+  staff: '<rect x="6" y="7" width="20" height="13" rx="2"/><path d="M3 24h26l-2 3H5z"/>',
+  sys: '<rect x="5" y="5" width="22" height="7" rx="2"/><rect x="5" y="15" width="22" height="7" rx="2"/><path d="M9 8.5h2M9 18.5h2M16 26v3M11 29h10"/>',
+  hot: '<path d="M5 10h19a3 3 0 0 1 3 3v10a3 3 0 0 1-3 3H8a3 3 0 0 1-3-3z"/><path d="M5 10l15-5 2 5"/><circle cx="21" cy="18" r="1.6"/><path d="M24.5 3.5a5 5 0 0 1 3 3M23 1a8 8 0 0 1 6 5" stroke-width="1.4"/>',
+  chain: '<rect x="3" y="11" width="8" height="10" rx="1.5"/><rect x="12" y="11" width="8" height="10" rx="1.5"/><rect x="21" y="11" width="8" height="10" rx="1.5"/>'
+};
+VIDEOS[2] = { dur: 46, build() {
+  const F = frame({ part: 2, name: "One laptop", dur: 46, endIn: 38.4, src: "Sources: Binance; TRM Labs, 30 October 2026", srcIn: 3.8 });
+  const beats = [
+    [kin(el("h1", "h blk", null, stage, { top: "300px", fontSize: "124px" }), "It started with *one laptop.*"), null, .15, 3.5],
+    beat("A hacked laptop belonging to a *Binance engineer.*", "Binance says this may have been the way in. It has not said how the laptop was hacked.", 3.7, 9.8, 72),
+    beat("From it, the attacker reached the *withdrawal system.*", "The software that checks and sends customers’ withdrawals.", 10.0, 15.8, 72),
+    beat("It sent *fake orders.* The system paid them.", "Binance says no secret keys leaked. Its own system did the work.", 16.0, 22.2, 72),
+    beat("*$6.36bn* left on ten blockchains in about 20 minutes.", "From 8.05pm UK time on Thursday, according to TRM Labs.", 22.4, 30.2, 72),
+    beat("Investigators blame *North Korea.*", "Its hackers often get in through staff: fake job offers, booby-trapped coding tests, fake employees.", 30.4, 38.4, 72)
+  ];
+  const mk = (top, icon, title, sub, tall) => {
+    const n = el("div", "node fade" + (tall ? " tall" : ""), null, stage, { top: top + "px" });
+    const inner = tall ? el("div", "row", null, n) : n;
+    el("span", null, `<svg viewBox="0 0 32 32">${icon}</svg>`, inner).style.display = "contents";
+    el("div", null, `<b>${title}</b><small>${sub}</small>`, inner);
+    if (tall) n._tiles = el("div", "tiles", ["ETH", "BTC", "TRX", "XRP", "SOL", "ARB", "OP", "BASE", "AVAX", "POL"].map(x => `<span>${x}</span>`).join(""), n);
+    n._glow = el("div", "glow", null, n);
+    return n;
+  };
+  const Y = [740, 920, 1100, 1280];
+  const n1 = mk(Y[0], ICON.staff, "Engineer’s laptop", "a DevOps engineer"), n2 = mk(Y[1], ICON.sys, "Withdrawal system", "checks and sends payments");
+  const n3 = mk(Y[2], ICON.hot, "Hot wallets", "online wallets that pay out"), n4 = mk(Y[3], ICON.chain, "Ten blockchains", "public and final", true);
+  const nodes = [n1, n2, n3, n4];
+  const WX = 480;
+  const wires = [0, 1, 2].map(k => el("div", "wire", null, stage, { left: WX + "px", top: (Y[k] + 124) + "px", height: "56px", transform: "scaleY(0)" }));
+  const dots = Array.from({ length: 9 }, () => el("div", "dot", null, stage, { left: WX + "px", opacity: 0 }));
+  const HOTC = hex("#DD4519"), RULE = hex("#C7CED8"), RAISE = hex("#F7F8FA"), WASH = hex("#F9DDD3");
+  const heat = (n, p) => { n.style.borderColor = css(mix(RULE, HOTC, p)); n.style.background = css(mix(RAISE, WASH, p)); n.querySelector("svg").style.stroke = css(mix(hex("#3A4454"), HOTC, p)); };
+  return (t) => {
+    F.seek(t);
+    beats.forEach(([h, s, a, b]) => { showKin(h, t, a, b); if (s) fade(s, t, a + .6, b); });
+    const dim = 1 - .62 * ease(seg(t, 30.6, 31.4)) ;
+    const endOut = 1 - ease(seg(t, 37.9, 38.4));
+    [[n1, 1.0], [n2, 10.2], [n3, 16.2], [n4, 22.6]].forEach(([n, a], k) => {
+      const op = fade(n, t, a, null, { dy: 40 });
+      n.style.opacity = op * (k === 0 ? 1 : dim) * endOut;
+    });
+    heat(n1, ease(seg(t, 4.4, 5.0))); heat(n2, ease(seg(t, 11.6, 12.2))); heat(n3, ease(seg(t, 17.6, 18.2))); heat(n4, ease(seg(t, 23.6, 24.2)));
+    // glow pulse on the laptop at the end
+    const gp = seg(t, 31.0, 37.5); n1._glow.style.opacity = gp > 0 ? (.25 + .45 * Math.abs(Math.sin(gp * Math.PI * 3))) * endOut : 0;
+    // tiles light up one by one
+    [...n4._tiles.children].forEach((s, i) => { const p = ease(seg(t, 24.0 + i * .28, 24.4 + i * .28)); s.style.background = css(mix(hex("#ECEFF3"), HOTC, p)); s.style.color = p > .5 ? "#fff" : "#5B6576"; s.style.borderColor = css(mix(RULE, HOTC, p)); });
+    // wires
+    [[10.8, 11.6], [16.8, 17.6], [23.0, 23.6]].forEach(([a, b], k) => { wires[k].style.transform = `scaleY(${ease(seg(t, a, b))})`; wires[k].style.opacity = dim * endOut; });
+    // dots stream down from the laptop to the blockchains
+    const L0 = Y[0] + 124, L1 = Y[3];
+    dots.forEach((d, i) => {
+      const active = t > 18.0 && t < 37.9;
+      const reach = t < 23.6 ? Y[2] : L1;
+      const y = L0 + (((t - 18) * 260 + i * 120) % (reach - L0 + 40)) - 20;
+      const vis = active && y > L0 && y < reach && !(y > Y[1] - 4 && y < Y[1] + 128) && !(y > Y[2] - 4 && y < Y[2] + 128);
+      d.style.top = y + "px"; d.style.opacity = vis ? dim * endOut : 0;
+    });
+  };
+} };
+
+/* ===================== 3. The race to freeze ===================== */
+const FLAKE = '<path d="M12 3v18M4.2 7.5l15.6 9M4.2 16.5l15.6-9M9.5 4.5 12 7l2.5-2.5M9.5 19.5 12 17l2.5 2.5"/>';
+VIDEOS[3] = { dur: 44, build() {
+  const F = frame({ part: 3, name: "The race to freeze", dur: 44, endIn: 38.4, src: "Sources: Reuters; CNN; Binance; Decrypt; TRM Labs. 30 October 2026" });
+  const beats = [
+    [kin(el("h1", "h blk", null, stage, { top: "300px", fontSize: "124px" }), "Can you *freeze* stolen crypto?"), null, .15, 3.5],
+    beat("Some of it. *Stablecoins* are digital dollars run by companies.", "Tether and Circle can block any address. Tokens there stop moving.", 3.7, 10.2, 72),
+    beat("Bitcoin and ether have *no company* behind them.", "No one can freeze them.", 10.4, 16.6, 72),
+    beat("Within hours, ~$2.4bn~ of stablecoins was frozen.", "Tether froze $1.57bn of USDT. Circle froze more than $800m of USDC.", 16.8, 24.8, 72),
+    beat("So the thief raced to swap them for *ether.*", "Every dollar swapped before a freeze lands is out of reach.", 25.0, 31.8, 72),
+    beat("About ~$3bn~ is frozen. The rest is on the move.", "Getting frozen money back usually takes court orders.", 32.0, 38.4, 72)
+  ];
+  // lanes
+  const lanes = el("div", null, null, stage, { position: "absolute", inset: "0" });
+  el("div", "lane-lab", "Stablecoins (USDT, USDC)", lanes, { top: "800px" });
+  el("div", "road", null, lanes, { top: "937px" });
+  const GX = 640;
+  el("div", "gate", null, lanes, { left: GX + "px", top: "855px" });
+  el("div", "gate-lab", "Issuer’s block list", lanes, { left: GX + "px", top: "1045px" });
+  el("div", "lane-lab", "Ether and bitcoin", lanes, { top: "1150px" });
+  el("div", "road", null, lanes, { top: "1287px" });
+  el("div", "gate-lab", "Thief’s wallet", lanes, { left: "860px", top: "1360px" });
+  const c1 = el("div", "coin", `<span class="g1">$</span><svg class="g2" viewBox="0 0 24 24">${FLAKE}</svg>`, lanes, { top: "940px" });
+  const c2 = el("div", "coin", "<span>Ξ</span>", lanes, { top: "1290px", background: "#DD4519" });
+  const DOL = hex("#13966A"), COLD = hex("#1C6FC0"), HOT = hex("#DD4519");
+  // bars
+  const bars = el("div", null, null, stage, { position: "absolute", inset: "0" });
+  const bt = el("div", "bar-row", `<div class="n">Tether (USDT) <b>$1.57bn</b></div><div class="bar" style="width:${1.57 / 3 * 840}px;background:#1C6FC0"></div>`, bars, { top: "820px" });
+  const bc = el("div", "bar-row", `<div class="n">Circle (USDC) <b>$0.8bn+</b></div><div class="bar" style="width:${.8 / 3 * 840}px;background:#1C6FC0"></div>`, bars, { top: "1020px" });
+  // swap row
+  const swap = el("div", null, null, stage, { position: "absolute", inset: "0" });
+  const coins = Array.from({ length: 8 }, (_, i) => el("div", "coin", `<span class="g1">$</span><span class="g3">Ξ</span><svg class="g2" viewBox="0 0 24 24">${FLAKE}</svg>`, swap, { left: (150 + (i % 4) * 200) + "px", top: (900 + Math.floor(i / 4) * 220) + "px" }));
+  const fate = ["e", "e", "f", "e", "f", "e", "e", "f"];
+  // stacked bar
+  const sb = el("div", null, null, stage, { position: "absolute", inset: "0" });
+  el("div", "lab", "Taken: $6.36bn", sb, { position: "absolute", left: "90px", top: "860px" });
+  const sbar = el("div", "stackbar", `<div style="width:${3 / 6.36 * 840}px;background:#1C6FC0;border-radius:10px 0 0 10px"></div><div style="flex:1;background:#DD4519;border-radius:0 10px 10px 0"></div>`, sb, { top: "920px" });
+  el("div", "legend", `<span><i style="background:#1C6FC0"></i>Frozen <b>about $3bn</b></span><span><i style="background:#DD4519"></i>Not frozen <b>about $3.4bn</b></span>`, sb, { position: "absolute", left: "90px", top: "1070px", width: "840px" });
+  return (t) => {
+    F.seek(t);
+    beats.forEach(([h, s, a, b]) => { showKin(h, t, a, b); if (s) fade(s, t, a + .6, b); });
+    fade(lanes, t, 3.9, 16.8, { dy: 0 });
+    // coin 1: travel then freeze
+    const p1 = easeIO(seg(t, 5.2, 7.8));
+    c1.style.left = lerp(140, GX - 80, p1) + "px";
+    const f1 = ease(seg(t, 8.0, 8.6));
+    c1.style.background = css(mix(DOL, COLD, f1));
+    c1.querySelector(".g1").style.opacity = 1 - f1; c1.querySelector(".g2").style.opacity = f1;
+    c1.style.boxShadow = `0 0 0 7px #ECEFF3, 0 0 0 ${7 + 22 * f1}px rgba(28,111,192,${.18 * f1})`;
+    const p2 = easeIO(seg(t, 11.0, 14.4));
+    c2.style.left = lerp(140, 880, p2) + "px";
+    c2.style.opacity = seg(t, 10.6, 11.0);
+    // bars
+    fade(bars, t, 17.4, 24.8, { dy: 0 });
+    [bt, bc].forEach((b, i) => { b.querySelector(".bar").style.transform = `scaleX(${ease(seg(t, 18.2 + i * .5, 19.4 + i * .5))})`; });
+    // swap race
+    fade(swap, t, 25.6, 31.8, { dy: 0 });
+    coins.forEach((c, i) => {
+      const p = ease(seg(t, 26.4 + i * .45, 26.8 + i * .45));
+      const f = fate[i] === "f", target = f ? COLD : HOT;
+      c.style.background = css(mix(DOL, target, p));
+      c.querySelector(".g1").style.opacity = 1 - p;
+      c.querySelector(".g3").style.opacity = f ? 0 : p;
+      c.querySelector(".g2").style.opacity = f ? p : 0;
+      c.style.transform = `scale(${1 + Math.sin(p * Math.PI) * .18})`;
+    });
+    // stacked bar
+    fade(sb, t, 32.4, 38.4, { dy: 0 });
+    const sp = ease(seg(t, 32.8, 34.0));
+    sbar.style.clipPath = `inset(0 ${(1 - sp) * 100}% 0 0)`;
+  };
+} };
+
+/* ===================== 4. North Korea ===================== */
+VIDEOS[4] = { dur: 50, build() {
+  const F = frame({ part: 4, name: "The suspects", dur: 50, endIn: 44.4, night: true, src: "Sources: TRM Labs; Chainalysis; Elliptic; FBI; KOTRA via UPI; UN sanctions monitors via Korea Times" });
+  // sky
+  const sky = el("canvas", null, null, stage); sky.width = 1080; sky.height = 1920;
+  const sg = sky.getContext("2d");
+  const r = rng(11);
+  const stars = Array.from({ length: 90 }, () => [r() * 1080, r() * 1500, r() * 1.6 + .5, r() * .6 + .2, r() * 6]);
+  const blocks = []; let x = 0;
+  while (x < 1080) { const w = 50 + r() * 80, h = 60 + r() * 150; if (!(x > 470 && x < 690) && !(x > 820 && x < 880)) blocks.push([x, w, h]); x += w + 4 + r() * 14; }
+  const windows = []; blocks.forEach(([bx, bw, bh]) => { for (let wy = 1920 - bh + 14; wy < 1910; wy += 18) for (let wx = bx + 10; wx < bx + bw - 10; wx += 16) if (r() > .88) windows.push([wx, wy, r() > .5 ? .45 : 1]); });
+  const beats = [
+    [kin(el("h1", "h blk", null, stage, { top: "300px", fontSize: "124px" }), "Who steals *$6bn* in 20 minutes?"), null, .15, 3.5],
+    beat("Crypto tracers blame *TraderTraitor,* an elite North Korean hacking unit.", "TRM Labs and Chainalysis both name it. No government has confirmed it yet.", 3.7, 9.8, 72),
+    beat("Its biggest heists, *to scale.*", "LAB:Each square is $10m", 10.0, 24.2, 72),
+    beat("Binance alone is about as much as North Korea stole in crypto from *2017 to 2025* combined.", null, 24.4, 30.8, 72),
+    beat("North Korea’s legal exports last year: *$469m.*", "Its biggest export category includes wigs and false eyelashes.", 31.0, 37.6, 72),
+    beat("The money is thought to pay for its *weapons.*", "Countries reporting to UN monitors estimate cyber theft pays for about 40% of its weapons programmes.", 37.8, 44.4, 72)
+  ];
+  // heists to scale
+  const H = [["Bangladesh Bank", "2016 · bank heist", "$81m", 8], ["Ronin Network", "2022", "$620m", 62], ["Bybit", "2025", "$1.5bn", 146], ["Binance", "2026", "$6.36bn", 636]];
+  const COLS = 38, C = 22, S = 19;
+  let y = 560;
+  const rows = H.map(([n, w, a, q], i) => {
+    const rowsN = Math.ceil(q / COLS);
+    const row = el("div", "sq-row fade", `<div class="n"><b${i === 3 ? ' style="color:#FF8A62"' : ""}>${n} <span>${w}</span></b><em>${a}</em></div>`, stage, { top: y + "px" });
+    const top = y + 64; y = top + rowsN * C + 36;
+    return { row, q, top, me: i === 3 };
+  });
+  const hc = el("canvas", null, null, stage); hc.width = 1080; hc.height = 1920; const hg = hc.getContext("2d");
+  // comparison bars
+  const cmp = el("div", null, null, stage, { position: "absolute", inset: "0" });
+  const mkBar = (top, label, val, w, col) => el("div", "bar-row", `<div class="n">${label} <b>${val}</b></div><div class="bar" style="width:${w}px;background:${col}"></div>`, cmp, { top: top + "px" });
+  const bA = mkBar(820, "Binance, one night", "$6.36bn", 6.36 / 6.75 * 840, "#FF6A3D");
+  const bB = mkBar(1010, "All crypto stolen by North Korea, 2017–2025", "$6.75bn", 840, "#56627B");
+  const bC = mkBar(1200, "North Korea’s legal exports, 2025", "$469m", .469 / 6.75 * 840, "#C5CDDB");
+  const big = el("div", "blk", `<div class="big">40%</div><div class="lab" style="margin-top:24px">of weapons programmes, by member states’ estimates</div>`, stage, { top: "860px" });
+  return (t) => {
+    F.seek(t);
+    // sky
+    sg.clearRect(0, 0, 1080, 1920);
+    const gr = sg.createLinearGradient(0, 1100, 0, 1920); gr.addColorStop(0, "rgba(59,51,80,0)"); gr.addColorStop(1, "rgba(59,51,80,.85)");
+    sg.fillStyle = gr; sg.fillRect(0, 1100, 1080, 820);
+    stars.forEach(([sx, sy, sr, so, ph]) => { sg.globalAlpha = so * (.7 + .3 * Math.sin(t * 1.3 + ph)); sg.fillStyle = "#C9D4EA"; sg.beginPath(); sg.arc(sx, sy, sr, 0, 7); sg.fill(); });
+    sg.globalAlpha = 1; sg.fillStyle = "#060A14";
+    blocks.forEach(([bx, bw, bh]) => sg.fillRect(bx, 1920 - bh, bw, bh));
+    sg.beginPath(); sg.moveTo(500, 1920); sg.lineTo(574, 1610); sg.lineTo(586, 1610); sg.lineTo(660, 1920); sg.fill(); sg.fillRect(568, 1590, 36, 26);
+    sg.fillRect(846, 1700, 10, 220); sg.fillStyle = "#E2683C"; sg.beginPath(); sg.ellipse(851, 1688, 7, 14, 0, 0, 7); sg.fill();
+    windows.forEach(([wx, wy, o]) => { sg.globalAlpha = o; sg.fillStyle = "#F2C45A"; sg.fillRect(wx, wy, 5, 7); });
+    sg.globalAlpha = 1;
+    beats.forEach(([h, s, a, b]) => { showKin(h, t, a, b); if (s) fade(s, t, a + .6, b); });
+    // heists
+    hg.clearRect(0, 0, 1080, 1920);
+    const starts = [10.6, 12.2, 14.0, 16.2];
+    rows.forEach((R, i) => {
+      const op = fade(R.row, t, starts[i], 24.2, { dy: 20 });
+      const fillP = seg(t, starts[i] + .3, starts[i] + .3 + (R.me ? 3.2 : 1.2));
+      const n = Math.round(fillP * R.q);
+      hg.globalAlpha = op;
+      hg.fillStyle = R.me ? "#FF6A3D" : "#56627B";
+      for (let k = 0; k < n; k++) { hg.beginPath(); hg.roundRect(90 + (k % COLS) * C, R.top + Math.floor(k / COLS) * C, S, S, 3); hg.fill(); }
+    });
+    hg.globalAlpha = 1;
+    // comparison bars
+    const cOp = fade(cmp, t, 25.6, 37.6, { dy: 0 });
+    bA.style.opacity = 1; bB.style.opacity = 1;
+    bA.querySelector(".bar").style.transform = `scaleX(${ease(seg(t, 26.0, 27.4))})`;
+    bB.querySelector(".bar").style.transform = `scaleX(${ease(seg(t, 26.6, 28.0))})`;
+    bC.style.opacity = ease(seg(t, 31.6, 32.2));
+    bC.querySelector(".bar").style.transform = `scaleX(${ease(seg(t, 31.8, 32.8))})`;
+    fade(big, t, 38.8, 44.4, { dy: 30 });
+  };
+} };
+
+/* ---------- boot ---------- */
+const id = +(new URLSearchParams(location.search).get("v") || 1);
+const V = VIDEOS[id];
+const render = V.build();
+// keep the end card, series label, progress line and source line above everything else
+stage.append(...stage.querySelectorAll(".src"), ...stage.querySelectorAll(".end"), ...stage.querySelectorAll(".series"), ...stage.querySelectorAll(".prog"));
+window.DUR = V.dur;
+window.seek = (t) => render(t);
+window.ready = document.fonts.ready.then(() => Promise.all([
+  document.fonts.load('850 100px "Archivo"'), document.fonts.load('500 40px "Newsreader"'), document.fonts.load('600 40px "JetBrains Mono"')
+])).then(() => { render(0); return true; });
+</script>
+</body>
+</html>
